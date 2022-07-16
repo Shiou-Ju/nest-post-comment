@@ -13,15 +13,30 @@ import { UserPostService } from './userPosts.service';
 export class PostsController {
   constructor(private readonly userPostService: UserPostService) {}
   @Get()
-  getAllPosts(): NestResponseBaseOption {
+  async getAllPosts(): Promise<NestResponseBaseOption> {
+    const posts = await this.userPostService.getPosts();
+
     const res: NestResponseBaseOption = {
       success: true,
-      data: [],
+      data: posts,
     };
     return res;
   }
 
-  // TODO: use db service
+  @Get('/top10')
+  async getTopTenPosts(): Promise<NestResponseBaseOption> {
+    const topPosts = await this.userPostService.getPosts({
+      sort: { totalCommentCount: -1 },
+      limit: 10,
+    });
+
+    const res: NestResponseBaseOption = {
+      success: true,
+      data: topPosts,
+    };
+    return res;
+  }
+
   @Post()
   async createPost(
     @Body() newPost: UserPostInterFace,

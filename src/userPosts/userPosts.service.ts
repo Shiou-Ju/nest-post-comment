@@ -1,24 +1,31 @@
-import { Model } from 'mongoose';
+import { FilterQuery, Model, SortValues } from 'mongoose';
 import { Injectable } from '@nestjs/common';
-// import { InjectConnection } from '@nestjs/mongoose';
-// import { Connection } from 'mongoose';
 import { InjectModel } from '@nestjs/mongoose';
 import { UserPost, UserPostDocument } from 'src/schemas/userPost.schema';
 
 @Injectable()
 export class UserPostService {
   constructor(
-    @InjectModel(UserPost.name) private userPostModel: Model<UserPostDocument>, // TODO: // @InjectConnection() private connection: Connection,
+    @InjectModel(UserPost.name) private userPostModel: Model<UserPostDocument>,
   ) {}
 
   async create(newPost: unknown): Promise<UserPost> {
     const createdUserPost = new this.userPostModel(newPost);
     createdUserPost.createdAt = new Date();
     createdUserPost.updatedAt = new Date();
+    // TODO: return lean doc
     return createdUserPost.save();
   }
 
-  async findAll(): Promise<UserPost[]> {
-    return this.userPostModel.find().exec();
+  async getPosts(props?: {
+    filter?: FilterQuery<UserPost>;
+    sort?: { [key in keyof Partial<UserPost>]: SortValues };
+    limit?: number;
+  }): Promise<UserPost[]> {
+    return this.userPostModel
+      .find(props.filter)
+      .sort(props.sort)
+      .limit(props.limit)
+      .lean();
   }
 }
