@@ -1,6 +1,9 @@
+// Node modules
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
+// Local Modules
+import configuration from './config/configuration';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { PostsController } from './posts/posts.controller';
@@ -12,8 +15,10 @@ import {
 
 @Module({
   imports: [
-    ConfigModule.forRoot(),
-    MongooseModule.forRoot('mongodb://localhost/post-comment'),
+    ConfigModule.forRoot({ load: [configuration] }),
+    // MongooseModule.forRoot('mongodb://localhost/post-comment'),
+    // TODO: inject config service at root level
+    MongooseModule.forRoot(process.env.MONGO_URI),
 
     // TODO: see Post.name works
     MongooseModule.forFeature([
