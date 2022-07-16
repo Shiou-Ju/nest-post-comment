@@ -2,6 +2,7 @@ import {
   BadRequestException,
   Body,
   Controller,
+  Delete,
   Get,
   HttpException,
   HttpStatus,
@@ -88,6 +89,19 @@ export class PostsController {
         throw new BadRequestException(`${error.name}\n${error.message}`);
       }
     }
+  }
+
+  @Delete('/:postDocId')
+  async deletePost(@Param() params: ParameterizedRoutParams) {
+    const { postDocId } = params;
+
+    const result = await this.userPostService.deletePost({ _id: postDocId });
+
+    const res: NestResponseBaseOption = {
+      success: true,
+      data: result,
+    };
+    return res;
   }
 
   @Put(':postDocId')

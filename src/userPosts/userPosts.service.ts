@@ -1,12 +1,13 @@
 import { FilterQuery, Model, SortValues, UpdateQuery } from 'mongoose';
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import {
-  TObjectId,
-  UserPost,
-  UserPostDocument,
-} from 'src/schemas/userPost.schema';
+import { UserPost, UserPostDocument } from 'src/schemas/userPost.schema';
 import { UserPostInterFace } from 'src/interfaces/userPost';
+
+type deleteResult = {
+  acknowledged: boolean;
+  deletedCount: number;
+};
 
 @Injectable()
 export class UserPostService {
@@ -22,6 +23,10 @@ export class UserPostService {
 
   async getPostById(props?: { _id: string }): Promise<UserPostDocument[]> {
     return this.userPostModel.findOne({ _id: props._id });
+  }
+
+  async deletePost(props?: { _id: string }): Promise<deleteResult> {
+    return this.userPostModel.deleteOne({ _id: props._id });
   }
 
   async getPosts(props?: {
