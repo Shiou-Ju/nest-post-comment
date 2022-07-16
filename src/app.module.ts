@@ -6,8 +6,8 @@ import { MongooseModule } from '@nestjs/mongoose';
 import configuration from './config/configuration';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { PostsController } from './posts/posts.controller';
-import { UserPostService } from './posts/posts.service';
+import { PostsController } from './userPosts/userPosts.controller';
+import { UserPostService } from './userPosts/userPosts.service';
 import {
   UserPost,
   PostSchema as UserPostSchema,

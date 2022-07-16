@@ -1,7 +1,7 @@
 import { Body, Controller, Get, Post } from '@nestjs/common';
 import { UserPostInterFace } from 'src/interfaces/userPost';
 import { UserPost } from 'src/schemas/userPost.schema';
-import { UserPostService } from './posts.service';
+import { UserPostService } from './userPosts.service';
 
 @Controller('posts')
 export class PostsController {
