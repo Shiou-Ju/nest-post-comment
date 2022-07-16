@@ -14,6 +14,10 @@ import { NestResponseBaseOption } from 'src/interfaces/baseOption';
 import { UserPostInterFace } from 'src/interfaces/userPost';
 import { UserPostService } from './userPosts.service';
 
+export type ParameterizedRoutParams = {
+  postDocId: string;
+};
+
 @Controller('posts')
 export class PostsController {
   constructor(private readonly userPostService: UserPostService) {}
@@ -24,6 +28,23 @@ export class PostsController {
     const res: NestResponseBaseOption = {
       success: true,
       data: posts,
+    };
+    return res;
+  }
+
+  @Get('/:postDocId')
+  async getSingleDoc(@Param() params: ParameterizedRoutParams) {
+    const { postDocId } = params;
+
+    const post = await this.userPostService.getPostById({ _id: postDocId });
+
+    if (!post) {
+      throw new HttpException(`${postDocId} not found`, HttpStatus.NOT_FOUND);
+    }
+
+    const res: NestResponseBaseOption = {
+      success: true,
+      data: post,
     };
     return res;
   }
@@ -73,38 +94,38 @@ export class PostsController {
   async updatePost(
     @Body()
     updatePost: UserPostInterFace,
-    @Param() params,
+    @Param() params: ParameterizedRoutParams,
   ) {
     const { postDocId } = params;
-    try {
-      if (!postDocId) {
-        throw new HttpException(
-          'Post document id is not provided',
-          HttpStatus.BAD_REQUEST,
-        );
-      }
-
-      const filter: FilterQuery<UserPostService> = { _id: postDocId };
-      const update: UpdateQuery<UserPostInterFace> = updatePost;
-
-      // TODO: still updates updatedAt, make sure if this satisfies needs
-      const createdPost = await this.userPostService.updatePost({
-        filter,
-        update,
-      });
-
-      const res = {
-        success: true,
-        data: createdPost,
-      };
-
-      return res;
-    } catch (error) {
-      console.error(error);
+    if (!postDocId) {
       throw new HttpException(
-        JSON.stringify(error),
-        HttpStatus.INTERNAL_SERVER_ERROR,
+        'Post document id is not provided',
+        HttpStatus.BAD_REQUEST,
       );
     }
+
+    const existingDoc = await this.userPostService.getPostById({
+      _id: postDocId,
+    });
+
+    if (!existingDoc) {
+      throw new HttpException(`${postDocId} not found`, HttpStatus.NOT_FOUND);
+    }
+
+    const filter: FilterQuery<UserPostService> = { _id: postDocId };
+    const update: UpdateQuery<UserPostInterFace> = updatePost;
+
+    // TODO: still updates updatedAt, make sure if this satisfies needs
+    const createdPost = await this.userPostService.updatePost({
+      filter,
+      update,
+    });
+
+    const res = {
+      success: true,
+      data: createdPost,
+    };
+
+    return res;
   }
 }

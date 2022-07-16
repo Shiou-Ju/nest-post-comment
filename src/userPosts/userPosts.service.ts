@@ -1,7 +1,11 @@
 import { FilterQuery, Model, SortValues, UpdateQuery } from 'mongoose';
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { UserPost, UserPostDocument } from 'src/schemas/userPost.schema';
+import {
+  TObjectId,
+  UserPost,
+  UserPostDocument,
+} from 'src/schemas/userPost.schema';
 import { UserPostInterFace } from 'src/interfaces/userPost';
 
 @Injectable()
@@ -14,6 +18,10 @@ export class UserPostService {
     const createdUserPost = new this.userPostModel(newPost);
     // TODO: return lean doc
     return createdUserPost.save();
+  }
+
+  async getPostById(props?: { _id: string }): Promise<UserPostDocument[]> {
+    return this.userPostModel.findOne({ _id: props._id });
   }
 
   async getPosts(props?: {
