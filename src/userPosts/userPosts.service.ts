@@ -13,6 +13,8 @@ export class UserPostService {
 
   async create(newPost: unknown): Promise<UserPost> {
     const createdUserPost = new this.userPostModel(newPost);
+    createdUserPost.createdAt = new Date();
+    createdUserPost.updatedAt = new Date();
     return createdUserPost.save();
   }
 

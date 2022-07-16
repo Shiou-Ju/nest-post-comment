@@ -1,7 +1,9 @@
-import { ObjectId, Document } from 'mongoose';
-
-export interface BaseOption extends Document {
-  _id: ObjectId;
+export interface BaseOption {
   createdAt: Date;
   updatedAt: Date;
 }
+
+export type NestResponseBaseOption = {
+  success: boolean;
+  data: unknown;
+};

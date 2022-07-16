@@ -10,16 +10,20 @@ export type UserPostDocument = UserPost & Document;
 export class UserPost {
   @Prop({ type: ObjectId })
   /** 使用者 doc id */
-  userId?: TObjectId;
-  @Prop()
+  userId: TObjectId;
+  @Prop({ required: true })
   /** 貼文內容 */
   postContent: string;
-  @Prop({ type: [ObjectId] })
+  @Prop({ type: [ObjectId], required: true })
   /** 留言串 doc ids */
   comments: Array<TObjectId>;
-  @Prop()
+  @Prop({ required: true })
   /** 貼文底下的留言總數，包含留言的留言 */
   totalCommentCount: number;
+  @Prop()
+  createdAt: Date;
+  @Prop()
+  updatedAt: Date;
 }
 
 export const PostSchema = SchemaFactory.createForClass(UserPost);
