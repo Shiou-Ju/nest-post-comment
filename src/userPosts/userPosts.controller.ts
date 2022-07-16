@@ -3,8 +3,13 @@ import {
   Body,
   Controller,
   Get,
+  HttpException,
+  HttpStatus,
+  Param,
   Post,
+  Put,
 } from '@nestjs/common';
+import { FilterQuery, UpdateQuery } from 'mongoose';
 import { NestResponseBaseOption } from 'src/interfaces/baseOption';
 import { UserPostInterFace } from 'src/interfaces/userPost';
 import { UserPostService } from './userPosts.service';
@@ -44,7 +49,7 @@ export class PostsController {
     try {
       newPost.totalCommentCount = 0;
 
-      const createdPost = await this.userPostService.create(newPost);
+      const createdPost = await this.userPostService.createPost(newPost);
 
       const res = {
         success: true,
@@ -61,6 +66,45 @@ export class PostsController {
         console.error(error);
         throw new BadRequestException(`${error.name}\n${error.message}`);
       }
+    }
+  }
+
+  @Put(':postDocId')
+  async updatePost(
+    @Body()
+    updatePost: UserPostInterFace,
+    @Param() params,
+  ) {
+    const { postDocId } = params;
+    try {
+      if (!postDocId) {
+        throw new HttpException(
+          'Post document id is not provided',
+          HttpStatus.BAD_REQUEST,
+        );
+      }
+
+      const filter: FilterQuery<UserPostService> = { _id: postDocId };
+      const update: UpdateQuery<UserPostInterFace> = updatePost;
+
+      // TODO: still updates updatedAt, make sure if this satisfies needs
+      const createdPost = await this.userPostService.updatePost({
+        filter,
+        update,
+      });
+
+      const res = {
+        success: true,
+        data: createdPost,
+      };
+
+      return res;
+    } catch (error) {
+      console.error(error);
+      throw new HttpException(
+        JSON.stringify(error),
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
     }
   }
 }

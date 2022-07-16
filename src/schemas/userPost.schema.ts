@@ -6,7 +6,7 @@ export type TObjectId = mongoose.ObjectId;
 
 export type UserPostDocument = UserPost & Document;
 
-@Schema()
+@Schema({ timestamps: true })
 export class UserPost {
   @Prop({ type: ObjectId })
   /** 使用者 doc id */
