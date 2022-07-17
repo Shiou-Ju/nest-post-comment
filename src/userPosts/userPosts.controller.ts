@@ -28,6 +28,10 @@ export class PostsController {
 
     const res: NestResponseBaseOption = {
       success: true,
+      pagination: {
+        page: 1,
+        count: posts.length,
+      },
       data: posts,
     };
     return res;
@@ -59,6 +63,10 @@ export class PostsController {
 
     const res: NestResponseBaseOption = {
       success: true,
+      pagination: {
+        page: 1,
+        count: topPosts.length,
+      },
       data: topPosts,
     };
     return res;
@@ -73,7 +81,7 @@ export class PostsController {
 
       const createdPost = await this.userPostService.createPost(newPost);
 
-      const res = {
+      const res: NestResponseBaseOption = {
         success: true,
         data: createdPost,
       };

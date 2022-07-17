@@ -34,11 +34,14 @@ export class UserPostService {
     sort?: { [key in keyof Partial<UserPost>]: SortValues };
     limit?: number;
   }): Promise<UserPostDocument[]> {
-    return this.userPostModel
-      .find(props.filter)
-      .sort(props.sort)
-      .limit(props.limit)
-      .lean();
+    return (
+      this.userPostModel
+        .find(props?.filter || {})
+        .sort(props?.sort || {})
+        // TODO: maybe add pagination here
+        .limit(props?.limit || 50)
+        .lean()
+    );
   }
 
   async updatePost(props: {
