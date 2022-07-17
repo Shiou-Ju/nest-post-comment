@@ -2,7 +2,7 @@ import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import mongoose from 'mongoose';
 
 export const ObjectId = mongoose.Types.ObjectId;
-export type TObjectId = mongoose.ObjectId;
+export type TObjectId = mongoose.Types.ObjectId;
 
 export type UserPostDocument = UserPost & Document;
 

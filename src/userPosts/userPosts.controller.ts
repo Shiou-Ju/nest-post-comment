@@ -37,23 +37,6 @@ export class PostsController {
     return res;
   }
 
-  @Get('/:postDocId')
-  async getSingleDoc(@Param() params: ParameterizedRoutParams) {
-    const { postDocId } = params;
-
-    const post = await this.userPostService.getPostById({ _id: postDocId });
-
-    if (!post) {
-      throw new HttpException(`${postDocId} not found`, HttpStatus.NOT_FOUND);
-    }
-
-    const res: NestResponseBaseOption = {
-      success: true,
-      data: post,
-    };
-    return res;
-  }
-
   @Get('/top10')
   async getTopTenPosts(): Promise<NestResponseBaseOption> {
     const topPosts = await this.userPostService.getPosts({
@@ -99,6 +82,23 @@ export class PostsController {
     }
   }
 
+  @Get('/:postDocId')
+  async getSingleDoc(@Param() params: ParameterizedRoutParams) {
+    const { postDocId } = params;
+
+    const post = await this.userPostService.getPostById(postDocId);
+
+    if (!post) {
+      throw new HttpException(`${postDocId} not found`, HttpStatus.NOT_FOUND);
+    }
+
+    const res: NestResponseBaseOption = {
+      success: true,
+      data: post,
+    };
+    return res;
+  }
+
   @Delete('/:postDocId')
   async deletePost(@Param() params: ParameterizedRoutParams) {
     const { postDocId } = params;
@@ -112,7 +112,7 @@ export class PostsController {
     return res;
   }
 
-  @Put(':postDocId')
+  @Put('/:postDocId')
   async updatePost(
     @Body()
     updatePost: UserPostInterFace,
@@ -126,9 +126,7 @@ export class PostsController {
       );
     }
 
-    const existingDoc = await this.userPostService.getPostById({
-      _id: postDocId,
-    });
+    const existingDoc = await this.userPostService.getPostById(postDocId);
 
     if (!existingDoc) {
       throw new HttpException(`${postDocId} not found`, HttpStatus.NOT_FOUND);
