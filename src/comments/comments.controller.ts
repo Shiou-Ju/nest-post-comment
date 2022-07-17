@@ -35,27 +35,46 @@ export class CommentsController {
     private readonly userPostServce: UserPostService,
   ) {}
   @Post()
-  async createPost(
+  async createComment(
     @Body() newComment: CommentInterface,
     @Param() params: ParameterizedRoutParams,
   ): Promise<NestResponseBaseOption> {
     const { postDocId } = params;
 
+    // TODO: implement target comment and linked comments
     const comment: CommentInterface = {
       ...newComment,
       targetPostId: new ObjectId(postDocId),
+      // targetCommentId: new ObjectId(commentDocId),
     };
 
     try {
       const createdComment = await this.commentService.createComment(comment);
 
+      // update userPost total comment counts
+      const filter: FilterQuery<Comment> = {
+        targetPostId: new ObjectId(postDocId),
+      };
+
+      const select = { _id: 1 };
+
+      const newTotalComments = await this.commentService.getComments({
+        filter,
+        select,
+      });
+
+      const postDocFilter = { _id: postDocId };
+      const postDocUpdate = { totalCommentCount: newTotalComments.length };
+
+      await this.userPostServce.updatePost({
+        filter: postDocFilter,
+        update: postDocUpdate,
+      });
+
       const res: NestResponseBaseOption = {
         success: true,
         data: createdComment,
       };
-
-      // TODO: implement update functionality
-      // const newTotalCommentCount = this.commentService
 
       return res;
     } catch (error) {
@@ -82,11 +101,16 @@ export class CommentsController {
 
     const res: NestResponseBaseOption = {
       success: true,
+      pagination: {
+        page: 1,
+        count: posts.length,
+      },
       data: posts,
     };
     return res;
   }
 
+  // TODO: reconsider, maybe this is for all comments under a certain comment
   @Get('/:commentDocId')
   async getSingleComment(@Param() params: ParameterizedRoutParams) {
     const { commentDocId } = params;

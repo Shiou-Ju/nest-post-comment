@@ -4,6 +4,7 @@ import { InjectModel } from '@nestjs/mongoose';
 
 import { Comment, CommentDocument } from 'src/schemas/comment.schema';
 import { CommentInterface } from 'src/interfaces/comment';
+import { TObjectId } from 'src/schemas/userPost.schema';
 
 @Injectable()
 export class CommentService {
@@ -25,6 +26,8 @@ export class CommentService {
     filter?: FilterQuery<Comment>;
     sort?: { [key in keyof Partial<Comment>]: SortValues };
     limit?: number;
+    // TODO: Add proper type
+    select?: { [key in keyof Partial<Comment> & TObjectId]: SortValues };
   }): Promise<CommentDocument[]> {
     return (
       this.commentModel
@@ -32,6 +35,7 @@ export class CommentService {
         .sort(props?.sort || {})
         // TODO: maybe add pagination here
         .limit(props?.limit || Infinity)
+        .select(props?.select || {})
         .lean()
     );
   }
