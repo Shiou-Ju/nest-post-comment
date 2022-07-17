@@ -8,16 +8,18 @@ import {
   Param,
   Post,
 } from '@nestjs/common';
+import { FilterQuery } from 'mongoose';
 import {
   NestResponseBaseOption,
   ParameterizedRoutParams,
 } from 'src/interfaces/baseOption';
 import { CommentInterface } from 'src/interfaces/comment';
+import { Comment } from 'src/schemas/comment.schema';
 import { ObjectId } from 'src/schemas/userPost.schema';
 import { UserPostService } from 'src/userPosts/userPosts.service';
 import { CommentService } from './comments.service';
 
-@Controller('posts/:postId/comments')
+@Controller('posts/:postDocId/comments')
 export class CommentsController {
   /**
    * 實踐之事項：
@@ -66,6 +68,23 @@ export class CommentsController {
         throw new BadRequestException(`${error.name}\n${error.message}`);
       }
     }
+  }
+
+  @Get()
+  async getAllCommentsByPost(@Param() params: ParameterizedRoutParams) {
+    const { postDocId } = params;
+
+    const filter: FilterQuery<Comment> = {
+      targetPostId: new ObjectId(postDocId),
+    };
+
+    const posts = await this.commentService.getComments({ filter });
+
+    const res: NestResponseBaseOption = {
+      success: true,
+      data: posts,
+    };
+    return res;
   }
 
   @Get('/:commentDocId')
