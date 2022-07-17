@@ -19,6 +19,11 @@ import { ObjectId } from 'src/schemas/userPost.schema';
 import { UserPostService } from 'src/userPosts/userPosts.service';
 import { CommentService } from './comments.service';
 
+type CreateCommentRequestBody = {
+  commentDocId?: string;
+  newComment: CommentInterface;
+};
+
 @Controller('posts/:postDocId/comments')
 export class CommentsController {
   /**
@@ -36,16 +41,18 @@ export class CommentsController {
   ) {}
   @Post()
   async createComment(
-    @Body() newComment: CommentInterface,
+    @Body() reqBody: CreateCommentRequestBody,
     @Param() params: ParameterizedRoutParams,
   ): Promise<NestResponseBaseOption> {
     const { postDocId } = params;
+
+    const { commentDocId, newComment } = reqBody;
 
     // TODO: implement target comment and linked comments
     const comment: CommentInterface = {
       ...newComment,
       targetPostId: new ObjectId(postDocId),
-      // targetCommentId: new ObjectId(commentDocId),
+      targetCommentId: new ObjectId(commentDocId),
     };
 
     try {
@@ -71,6 +78,23 @@ export class CommentsController {
         update: postDocUpdate,
       });
 
+      // update linked comments in target comment
+      const commentDocFilter = { _id: commentDocId };
+      const targetComment = await this.commentService.getCommentById(
+        commentDocId,
+      );
+      const originalLinkedComments = targetComment?.linkedComments || [];
+      const commentDocUpdate = {
+        linkedComments: [
+          ...originalLinkedComments,
+          new ObjectId(createdComment._id),
+        ],
+      };
+      await this.commentService.updateComment({
+        filter: commentDocFilter,
+        update: commentDocUpdate,
+      });
+
       const res: NestResponseBaseOption = {
         success: true,
         data: createdComment,
@@ -78,6 +102,8 @@ export class CommentsController {
 
       return res;
     } catch (error) {
+      console.error(error);
+
       // TODO: better handling?
       const isValidationError =
         error instanceof Error && error.name.includes('ValidationError');
@@ -86,6 +112,11 @@ export class CommentsController {
         console.error(error);
         throw new BadRequestException(`${error.name}\n${error.message}`);
       }
+
+      throw new HttpException(
+        JSON.stringify(error),
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
     }
   }
 

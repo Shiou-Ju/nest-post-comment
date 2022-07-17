@@ -1,4 +1,4 @@
-import { FilterQuery, Model, SortValues } from 'mongoose';
+import { FilterQuery, Model, SortValues, UpdateQuery } from 'mongoose';
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 
@@ -12,7 +12,9 @@ export class CommentService {
     @InjectModel(Comment.name) private commentModel: Model<CommentDocument>,
   ) {}
 
-  async createComment(newComment: CommentInterface): Promise<Comment> {
+  async createComment(
+    newComment: CommentInterface,
+  ): Promise<Comment & { _id: TObjectId }> {
     const createdComment = new this.commentModel(newComment);
     // TODO: return lean doc
     return createdComment.save();
@@ -38,5 +40,18 @@ export class CommentService {
         .select(props?.select || {})
         .lean()
     );
+  }
+
+  async updateComment(props: {
+    filter?: FilterQuery<Comment>;
+    update?: UpdateQuery<CommentInterface>;
+  }): Promise<CommentDocument> {
+    const model = this.commentModel;
+    return await model
+      .findOneAndUpdate(props.filter, props.update, {
+        new: true,
+        upsert: true,
+      })
+      .lean();
   }
 }
