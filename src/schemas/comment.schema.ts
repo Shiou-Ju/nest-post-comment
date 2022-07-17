@@ -1,8 +1,10 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { ObjectId, TObjectId } from './userPost.schema';
 
-@Schema()
-export class Commet {
+export type CommentDocument = Comment & Document;
+
+@Schema({ timestamps: true })
+export class Comment {
   @Prop({ type: ObjectId })
   /** 使用者 doc id */
   userId: TObjectId;
@@ -38,4 +40,4 @@ export class Commet {
 //   linkedComments: Array<ObjectId>,
 // });
 
-export const CommentSchema = SchemaFactory.createForClass(Commet);
+export const CommentSchema = SchemaFactory.createForClass(Comment);

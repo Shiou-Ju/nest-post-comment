@@ -11,13 +11,12 @@ import {
   Put,
 } from '@nestjs/common';
 import { FilterQuery, UpdateQuery } from 'mongoose';
-import { NestResponseBaseOption } from 'src/interfaces/baseOption';
+import {
+  NestResponseBaseOption,
+  ParameterizedRoutParams,
+} from 'src/interfaces/baseOption';
 import { UserPostInterFace } from 'src/interfaces/userPost';
 import { UserPostService } from './userPosts.service';
-
-export type ParameterizedRoutParams = {
-  postDocId: string;
-};
 
 @Controller('posts')
 export class PostsController {

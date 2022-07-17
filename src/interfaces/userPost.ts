@@ -1,5 +1,5 @@
 import { TObjectId } from 'src/schemas/userPost.schema';
-import { BaseOption } from './baseOption';
+import { DocumentTimeStampsBaseOption } from './baseOption';
 
 export interface UserPostInterFace {
   /** 使用者 doc id */
@@ -12,4 +12,5 @@ export interface UserPostInterFace {
   totalCommentCount: number;
 }
 
-export type CreatePostInterface = UserPostInterFace & BaseOption;
+export type CreatePostInterface = UserPostInterFace &
+  DocumentTimeStampsBaseOption;

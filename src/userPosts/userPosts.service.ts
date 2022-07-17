@@ -3,11 +3,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { UserPost, UserPostDocument } from 'src/schemas/userPost.schema';
 import { UserPostInterFace } from 'src/interfaces/userPost';
-
-type deleteResult = {
-  acknowledged: boolean;
-  deletedCount: number;
-};
+import { deleteResult } from 'src/interfaces/baseOption';
 
 @Injectable()
 export class UserPostService {

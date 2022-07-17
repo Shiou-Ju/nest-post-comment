@@ -8,11 +8,13 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { PostsController } from './userPosts/userPosts.controller';
 import { UserPostService } from './userPosts/userPosts.service';
+import { CommentService } from './comments/comments.service';
 import {
   UserPost,
   PostSchema as UserPostSchema,
 } from './schemas/userPost.schema';
 import { CommentsController } from './comments/comments.controller';
+import { Comment, CommentSchema } from './schemas/comment.schema';
 
 @Module({
   imports: [
@@ -24,8 +26,9 @@ import { CommentsController } from './comments/comments.controller';
     MongooseModule.forFeature([
       { name: UserPost.name, schema: UserPostSchema },
     ]),
+    MongooseModule.forFeature([{ name: Comment.name, schema: CommentSchema }]),
   ],
   controllers: [AppController, PostsController, CommentsController],
-  providers: [AppService, UserPostService],
+  providers: [AppService, UserPostService, CommentService],
 })
 export class AppModule {}
