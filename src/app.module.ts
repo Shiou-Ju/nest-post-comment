@@ -12,11 +12,11 @@ import {
   UserPost,
   PostSchema as UserPostSchema,
 } from './schemas/userPost.schema';
+import { CommentsController } from './comments/comments.controller';
 
 @Module({
   imports: [
     ConfigModule.forRoot({ load: [configuration] }),
-    // MongooseModule.forRoot('mongodb://localhost/post-comment'),
     // TODO: inject config service at root level
     MongooseModule.forRoot(process.env.MONGO_URI),
 
@@ -24,23 +24,8 @@ import {
     MongooseModule.forFeature([
       { name: UserPost.name, schema: UserPostSchema },
     ]),
-
-    // TODO: see how factory works
-    // MongooseModule.forRootAsync({
-    //   imports: [ConfigModule],
-    //   useFactory: async () => ({
-    //     uri: 'mongodb://localhost:27017',
-    //     // useNewUrlParser: true,
-    //     // useUnifiedTopology: true,
-    //     // useCreateIndex: true,
-    //     // useFindAndModify: false,
-    //   }),
-    // }),
-
-    // TODO: inject to factory provider
-    //   inject: [getConnectionToken('cats')],
   ],
-  controllers: [AppController, PostsController],
+  controllers: [AppController, PostsController, CommentsController],
   providers: [AppService, UserPostService],
 })
 export class AppModule {}

@@ -1,14 +1,14 @@
-import { ObjectId } from 'mongoose';
+import { TObjectId } from 'src/schemas/userPost.schema';
 
 export interface CommentInterface {
   /** 使用者 doc id */
-  userId?: ObjectId;
+  userId?: TObjectId;
   /** 針對的貼文 doc id */
-  targetPostId: ObjectId;
+  targetPostId: TObjectId;
   /** 針對的留言 doc id */
-  targetCommentId?: ObjectId;
+  targetCommentId?: TObjectId;
   /** 留言內容 */
   commentContent: string;
   /** 連結的子留言 */
-  linkedComments: ObjectId[];
+  linkedComments: TObjectId[];
 }
