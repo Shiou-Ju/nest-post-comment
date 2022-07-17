@@ -82,7 +82,7 @@ export class PostsController {
   }
 
   @Get('/:postDocId')
-  async getSingleDoc(@Param() params: ParameterizedRoutParams) {
+  async getSinglePost(@Param() params: ParameterizedRoutParams) {
     const { postDocId } = params;
 
     const post = await this.userPostService.getPostById(postDocId);

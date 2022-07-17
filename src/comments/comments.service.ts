@@ -16,4 +16,8 @@ export class CommentService {
     // TODO: return lean doc
     return createdComment.save();
   }
+
+  async getCommentById(_id: string): Promise<CommentDocument> {
+    return this.commentModel.findOne({ _id });
+  }
 }
