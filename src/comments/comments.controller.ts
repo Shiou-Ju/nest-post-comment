@@ -14,7 +14,7 @@ import {
   ParameterizedRoutParams,
 } from 'src/interfaces/baseOption';
 import { CommentInterface } from 'src/interfaces/comment';
-import { Comment } from 'src/schemas/comment.schema';
+import { Comment, CommentDocument } from 'src/schemas/comment.schema';
 import { ObjectId } from 'src/schemas/userPost.schema';
 import { UserPostService } from 'src/userPosts/userPosts.service';
 import { CommentService } from './comments.service';
@@ -136,23 +136,21 @@ export class CommentsController {
     return res;
   }
 
-  // TODO: reconsider, maybe this is for all comments under a certain comment
   @Get('/:commentDocId')
-  async getSingleComment(@Param() params: ParameterizedRoutParams) {
+  async getAllCommentsByParantComment(
+    @Param() params: ParameterizedRoutParams,
+  ) {
     const { commentDocId } = params;
 
-    const post = await this.commentService.getCommentById(commentDocId);
+    const filter: FilterQuery<CommentDocument> = {
+      targetCommentId: new ObjectId(commentDocId),
+    };
 
-    if (!post) {
-      throw new HttpException(
-        `${commentDocId} not found`,
-        HttpStatus.NOT_FOUND,
-      );
-    }
+    const posts = await this.commentService.getComments({ filter });
 
     const res: NestResponseBaseOption = {
       success: true,
-      data: post,
+      data: posts,
     };
     return res;
   }

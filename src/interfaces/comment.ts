@@ -10,5 +10,6 @@ export interface CommentInterface {
   /** 留言內容 */
   commentContent: string;
   /** 連結的子留言 */
+  // TODO: maybe we don't need this field
   linkedComments: TObjectId[];
 }
