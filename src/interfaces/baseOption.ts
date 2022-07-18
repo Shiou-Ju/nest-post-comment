@@ -19,7 +19,9 @@ export type ParameterizedRoutParams = {
   commentDocId?: string;
 };
 
-export type deleteResult = {
+export type DeleteResult = {
   acknowledged: boolean;
   deletedCount: number;
 };
+
+export type ActionsForInvolvingDocumentsUpdate = 'delete' | 'create';

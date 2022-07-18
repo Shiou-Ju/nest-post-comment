@@ -102,6 +102,10 @@ export class PostsController {
   ) {
     const { postDocId } = params;
 
+    if (!postDocId) {
+      throw new BadRequestException('Post document id is not provided');
+    }
+
     const result = await this.userPostService.deletePost({ _id: postDocId });
 
     if (result.deletedCount === 0) {

@@ -2,22 +2,27 @@ import {
   BadRequestException,
   Body,
   Controller,
+  Delete,
   Get,
+  HttpStatus,
   NotFoundException,
   Param,
   Post,
   Put,
+  Res,
 } from '@nestjs/common';
 import { FilterQuery, UpdateQuery } from 'mongoose';
 import {
+  ActionsForInvolvingDocumentsUpdate,
   NestResponseBaseOption,
   ParameterizedRoutParams,
 } from 'src/interfaces/baseOption';
 import { CommentInterface } from 'src/interfaces/comment';
 import { Comment, CommentDocument } from 'src/schemas/comment.schema';
-import { ObjectId, TObjectId, UserPost } from 'src/schemas/userPost.schema';
+import { ObjectId, UserPost } from 'src/schemas/userPost.schema';
 import { UserPostService } from 'src/controllers/userPosts/userPosts.service';
 import { CommentService } from './comments.service';
+import { Response } from 'express';
 
 type CreateCommentRequestBody = {
   commentDocId?: string;
@@ -46,7 +51,7 @@ export class CommentsController {
   ): Promise<NestResponseBaseOption> {
     const { postDocId } = params;
 
-    const { commentDocId, newComment } = reqBody;
+    const { commentDocId: targetCommentDocId, newComment } = reqBody;
 
     const isPostExisting = await this.userPostServce.getPostById(postDocId);
 
@@ -54,14 +59,14 @@ export class CommentsController {
       throw new NotFoundException(`Post document ${postDocId} not found`);
     }
 
-    if (commentDocId) {
+    if (targetCommentDocId) {
       const targetComment = await this.commentService.getCommentById(
-        commentDocId,
+        targetCommentDocId,
       );
 
       if (!targetComment) {
         throw new NotFoundException(
-          `targetComment not found with id: ${commentDocId} `,
+          `targetComment not found with id: ${targetCommentDocId} `,
         );
       }
     }
@@ -69,7 +74,9 @@ export class CommentsController {
     const comment: CommentInterface = {
       ...newComment,
       targetPostId: new ObjectId(postDocId),
-      targetCommentId: commentDocId ? new ObjectId(commentDocId) : undefined,
+      targetCommentId: targetCommentDocId
+        ? new ObjectId(targetCommentDocId)
+        : undefined,
     };
 
     if (!comment.commentContent) {
@@ -79,11 +86,19 @@ export class CommentsController {
     const createdComment = await this.commentService.createComment(comment);
 
     // update userPost total comment counts
-    await this.updateTargetPost(postDocId, commentDocId);
+    await this.updateTargetPost(
+      postDocId,
+      targetCommentDocId ? undefined : createdComment._id.toString(),
+      'create',
+    );
 
     // update linked comments in target comment
-    if (commentDocId) {
-      await this.updateTargetComment(commentDocId, createdComment);
+    if (targetCommentDocId) {
+      await this.updateTargetComment(
+        targetCommentDocId,
+        createdComment._id.toString(),
+        'create',
+      );
     }
 
     const res: NestResponseBaseOption = {
@@ -170,9 +185,55 @@ export class CommentsController {
     return res;
   }
 
+  @Delete('/:commentDocId')
+  async deleteComment(
+    @Param() params: ParameterizedRoutParams,
+    @Res() response: Response,
+  ) {
+    const { commentDocId, postDocId } = params;
+
+    if (!commentDocId) {
+      throw new BadRequestException('Comment document id is not provided');
+    }
+    if (!postDocId) {
+      throw new BadRequestException('Post document id is not provided');
+    }
+
+    const doc = await this.commentService.getCommentById(commentDocId);
+
+    const result = await this.commentService.deleteComment({
+      _id: new ObjectId(commentDocId),
+    });
+
+    if (result.deletedCount === 0) {
+      response.status(HttpStatus.NO_CONTENT).send();
+    } else {
+      await this.updateTargetPost(
+        postDocId,
+        doc.targetCommentId ? undefined : commentDocId,
+        'delete',
+      );
+
+      if (doc.targetCommentId) {
+        await this.updateTargetComment(
+          doc.targetCommentId.toString(),
+          commentDocId,
+          'delete',
+        );
+      }
+
+      const res: NestResponseBaseOption = {
+        success: true,
+        data: result,
+      };
+      response.status(HttpStatus.OK).send(res);
+    }
+  }
+
   private async updateTargetPost(
     postDocId: string,
-    commentDocId: string | undefined,
+    parentCommentDocId: string | undefined,
+    action: ActionsForInvolvingDocumentsUpdate,
   ) {
     const filter: FilterQuery<Comment> = {
       targetPostId: new ObjectId(postDocId),
@@ -185,10 +246,20 @@ export class CommentsController {
     });
 
     const postDocFilter = { _id: postDocId };
-    const update: UpdateQuery<UserPost> = {
-      totalCommentCount: newTotalComments.length,
-      $addToSet: commentDocId ? {} : { comments: new ObjectId(commentDocId) },
-    };
+    const update: UpdateQuery<UserPost> =
+      action === 'delete'
+        ? {
+            totalCommentCount: newTotalComments.length,
+            $pull: parentCommentDocId
+              ? { comments: new ObjectId(parentCommentDocId) }
+              : {},
+          }
+        : {
+            totalCommentCount: newTotalComments.length,
+            $addToSet: parentCommentDocId
+              ? { comments: new ObjectId(parentCommentDocId) }
+              : {},
+          };
 
     return await this.userPostServce.updatePost({
       filter: postDocFilter,
@@ -197,14 +268,28 @@ export class CommentsController {
   }
 
   private async updateTargetComment(
-    commentDocId: string,
-    createdComment: Comment & { _id: TObjectId },
+    targetCommentDocId: string,
+    childCommentId: string | null,
+    action: ActionsForInvolvingDocumentsUpdate,
   ) {
-    const commentDocFilter = { _id: commentDocId };
+    const commentDocFilter = { _id: targetCommentDocId };
 
-    const commentDocUpdate: UpdateQuery<Comment> = {
-      $addToSet: { linkedComments: new ObjectId(createdComment._id) },
-    };
+    const commentDocUpdate: UpdateQuery<Comment> =
+      action === 'delete'
+        ? {
+            $pull: {
+              linkedComments: childCommentId
+                ? new ObjectId(childCommentId)
+                : {},
+            },
+          }
+        : {
+            $addToSet: {
+              linkedComments: childCommentId
+                ? new ObjectId(childCommentId)
+                : {},
+            },
+          };
 
     return await this.commentService.updateComment({
       filter: commentDocFilter,

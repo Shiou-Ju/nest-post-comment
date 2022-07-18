@@ -3,7 +3,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { UserPost, UserPostDocument } from 'src/schemas/userPost.schema';
 import { UserPostInterFace } from 'src/interfaces/userPost';
-import { deleteResult } from 'src/interfaces/baseOption';
+import { DeleteResult } from 'src/interfaces/baseOption';
 
 @Injectable()
 export class UserPostService {
@@ -21,7 +21,7 @@ export class UserPostService {
     return this.userPostModel.findOne({ _id });
   }
 
-  async deletePost(props?: { _id: string }): Promise<deleteResult> {
+  async deletePost(props?: { _id: string }): Promise<DeleteResult> {
     return this.userPostModel.deleteOne({ _id: props._id });
   }
 

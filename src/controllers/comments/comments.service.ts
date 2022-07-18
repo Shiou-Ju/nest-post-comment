@@ -5,6 +5,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Comment, CommentDocument } from 'src/schemas/comment.schema';
 import { CommentInterface } from 'src/interfaces/comment';
 import { TObjectId } from 'src/schemas/userPost.schema';
+import { DeleteResult } from 'src/interfaces/baseOption';
 
 @Injectable()
 export class CommentService {
@@ -75,5 +76,9 @@ export class CommentService {
         upsert: true,
       })
       .lean();
+  }
+
+  async deleteComment(props: { _id: TObjectId }): Promise<DeleteResult> {
+    return this.commentModel.deleteOne({ _id: props._id });
   }
 }
