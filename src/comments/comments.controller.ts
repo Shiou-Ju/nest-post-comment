@@ -3,8 +3,7 @@ import {
   Body,
   Controller,
   Get,
-  HttpException,
-  HttpStatus,
+  NotFoundException,
   Param,
   Post,
 } from '@nestjs/common';
@@ -51,16 +50,25 @@ export class CommentsController {
     const isPostExisting = await this.userPostServce.getPostById(postDocId);
 
     if (!isPostExisting) {
-      throw new HttpException(
-        `Post document ${postDocId} not found`,
-        HttpStatus.NOT_FOUND,
+      throw new NotFoundException(`Post document ${postDocId} not found`);
+    }
+
+    if (commentDocId) {
+      const targetComment = await this.commentService.getCommentById(
+        commentDocId,
       );
+
+      if (!targetComment) {
+        throw new NotFoundException(
+          `targetComment not found with id: ${commentDocId} `,
+        );
+      }
     }
 
     const comment: CommentInterface = {
       ...newComment,
       targetPostId: new ObjectId(postDocId),
-      targetCommentId: new ObjectId(commentDocId),
+      targetCommentId: commentDocId ? new ObjectId(commentDocId) : undefined,
     };
 
     if (!comment.commentContent) {
@@ -73,7 +81,9 @@ export class CommentsController {
     await this.updateTargetPost(postDocId, commentDocId);
 
     // update linked comments in target comment
-    await this.updateTargetComment(commentDocId, createdComment);
+    if (commentDocId) {
+      await this.updateTargetComment(commentDocId, createdComment);
+    }
 
     const res: NestResponseBaseOption = {
       success: true,
@@ -123,7 +133,10 @@ export class CommentsController {
     return res;
   }
 
-  private async updateTargetPost(postDocId: string, commentDocId: string) {
+  private async updateTargetPost(
+    postDocId: string,
+    commentDocId: string | undefined,
+  ) {
     const filter: FilterQuery<Comment> = {
       targetPostId: new ObjectId(postDocId),
     };
@@ -137,7 +150,7 @@ export class CommentsController {
     const postDocFilter = { _id: postDocId };
     const update: UpdateQuery<UserPost> = {
       totalCommentCount: newTotalComments.length,
-      $addToSet: { comments: new ObjectId(commentDocId) },
+      $addToSet: commentDocId ? {} : { comments: new ObjectId(commentDocId) },
     };
 
     return await this.userPostServce.updatePost({
@@ -151,16 +164,11 @@ export class CommentsController {
     createdComment: Comment & { _id: TObjectId },
   ) {
     const commentDocFilter = { _id: commentDocId };
-    const targetComment = await this.commentService.getCommentById(
-      commentDocId,
-    );
-    const originalLinkedComments = targetComment?.linkedComments || [];
-    const commentDocUpdate = {
-      linkedComments: [
-        ...originalLinkedComments,
-        new ObjectId(createdComment._id),
-      ],
+
+    const commentDocUpdate: UpdateQuery<Comment> = {
+      $addToSet: { linkedComments: new ObjectId(createdComment._id) },
     };
+
     return await this.commentService.updateComment({
       filter: commentDocFilter,
       update: commentDocUpdate,

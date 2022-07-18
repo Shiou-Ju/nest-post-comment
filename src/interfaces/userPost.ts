@@ -6,8 +6,7 @@ export interface UserPostInterFace {
   userId?: TObjectId;
   /** 貼文內容 */
   postContent: string;
-  /** 留言串 doc ids */
-  // TODO: maybe we don't need this field
+  /** 樓主 doc ids */
   comments: Array<TObjectId>;
   /** 貼文底下的留言總數，包含留言的留言 */
   totalCommentCount: number;
