@@ -9,7 +9,9 @@ import {
   Param,
   Post,
   Put,
+  Res,
 } from '@nestjs/common';
+import { Response } from 'express';
 import { FilterQuery, UpdateQuery } from 'mongoose';
 import {
   NestResponseBaseOption,
@@ -71,13 +73,18 @@ export class PostsController {
       return res;
     } catch (error) {
       // TODO: better handling?
+      console.error(error);
       const isValidationError =
         error instanceof Error && error.name.includes('ValidationError');
 
       if (isValidationError) {
-        console.error(error);
         throw new BadRequestException(`${error.name}\n${error.message}`);
       }
+
+      throw new HttpException(
+        'Internal Server Error',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
     }
   }
 
@@ -99,16 +106,23 @@ export class PostsController {
   }
 
   @Delete('/:postDocId')
-  async deletePost(@Param() params: ParameterizedRoutParams) {
+  async deletePost(
+    @Param() params: ParameterizedRoutParams,
+    @Res() response: Response,
+  ) {
     const { postDocId } = params;
 
     const result = await this.userPostService.deletePost({ _id: postDocId });
 
-    const res: NestResponseBaseOption = {
-      success: true,
-      data: result,
-    };
-    return res;
+    if (result.deletedCount === 0) {
+      response.status(HttpStatus.NO_CONTENT).send();
+    } else {
+      const res: NestResponseBaseOption = {
+        success: true,
+        data: result,
+      };
+      response.status(HttpStatus.OK).send(res);
+    }
   }
 
   @Put('/:postDocId')
