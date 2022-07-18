@@ -48,6 +48,15 @@ export class CommentsController {
 
     const { commentDocId, newComment } = reqBody;
 
+    const isPostExisting = await this.userPostServce.getPostById(postDocId);
+
+    if (!isPostExisting) {
+      throw new HttpException(
+        `Post document ${postDocId} not found`,
+        HttpStatus.NOT_FOUND,
+      );
+    }
+
     // TODO: implement target comment and linked comments
     const comment: CommentInterface = {
       ...newComment,
@@ -55,69 +64,55 @@ export class CommentsController {
       targetCommentId: new ObjectId(commentDocId),
     };
 
-    try {
-      const createdComment = await this.commentService.createComment(comment);
-
-      // update userPost total comment counts
-      const filter: FilterQuery<Comment> = {
-        targetPostId: new ObjectId(postDocId),
-      };
-
-      const select = { _id: 1 };
-
-      const newTotalComments = await this.commentService.getComments({
-        filter,
-        select,
-      });
-
-      const postDocFilter = { _id: postDocId };
-      const postDocUpdate = { totalCommentCount: newTotalComments.length };
-
-      await this.userPostServce.updatePost({
-        filter: postDocFilter,
-        update: postDocUpdate,
-      });
-
-      // update linked comments in target comment
-      const commentDocFilter = { _id: commentDocId };
-      const targetComment = await this.commentService.getCommentById(
-        commentDocId,
-      );
-      const originalLinkedComments = targetComment?.linkedComments || [];
-      const commentDocUpdate = {
-        linkedComments: [
-          ...originalLinkedComments,
-          new ObjectId(createdComment._id),
-        ],
-      };
-      await this.commentService.updateComment({
-        filter: commentDocFilter,
-        update: commentDocUpdate,
-      });
-
-      const res: NestResponseBaseOption = {
-        success: true,
-        data: createdComment,
-      };
-
-      return res;
-    } catch (error) {
-      console.error(error);
-
-      // TODO: better handling?
-      const isValidationError =
-        error instanceof Error && error.name.includes('ValidationError');
-
-      if (isValidationError) {
-        console.error(error);
-        throw new BadRequestException(`${error.name}\n${error.message}`);
-      }
-
-      throw new HttpException(
-        JSON.stringify(error),
-        HttpStatus.INTERNAL_SERVER_ERROR,
-      );
+    if (!comment.commentContent) {
+      throw new BadRequestException(`commentContent is not provided`);
     }
+
+    const createdComment = await this.commentService.createComment(comment);
+
+    // update userPost total comment counts
+    const filter: FilterQuery<Comment> = {
+      targetPostId: new ObjectId(postDocId),
+    };
+
+    const select = { _id: 1 };
+
+    const newTotalComments = await this.commentService.getComments({
+      filter,
+      select,
+    });
+
+    const postDocFilter = { _id: postDocId };
+    const postDocUpdate = { totalCommentCount: newTotalComments.length };
+
+    await this.userPostServce.updatePost({
+      filter: postDocFilter,
+      update: postDocUpdate,
+    });
+
+    // update linked comments in target comment
+    const commentDocFilter = { _id: commentDocId };
+    const targetComment = await this.commentService.getCommentById(
+      commentDocId,
+    );
+    const originalLinkedComments = targetComment?.linkedComments || [];
+    const commentDocUpdate = {
+      linkedComments: [
+        ...originalLinkedComments,
+        new ObjectId(createdComment._id),
+      ],
+    };
+    await this.commentService.updateComment({
+      filter: commentDocFilter,
+      update: commentDocUpdate,
+    });
+
+    const res: NestResponseBaseOption = {
+      success: true,
+      data: createdComment,
+    };
+
+    return res;
   }
 
   @Get()
