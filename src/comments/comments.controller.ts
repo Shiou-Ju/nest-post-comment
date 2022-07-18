@@ -8,14 +8,14 @@ import {
   Param,
   Post,
 } from '@nestjs/common';
-import { FilterQuery } from 'mongoose';
+import { FilterQuery, UpdateQuery } from 'mongoose';
 import {
   NestResponseBaseOption,
   ParameterizedRoutParams,
 } from 'src/interfaces/baseOption';
 import { CommentInterface } from 'src/interfaces/comment';
 import { Comment, CommentDocument } from 'src/schemas/comment.schema';
-import { ObjectId } from 'src/schemas/userPost.schema';
+import { ObjectId, TObjectId, UserPost } from 'src/schemas/userPost.schema';
 import { UserPostService } from 'src/userPosts/userPosts.service';
 import { CommentService } from './comments.service';
 
@@ -57,7 +57,6 @@ export class CommentsController {
       );
     }
 
-    // TODO: implement target comment and linked comments
     const comment: CommentInterface = {
       ...newComment,
       targetPostId: new ObjectId(postDocId),
@@ -71,41 +70,10 @@ export class CommentsController {
     const createdComment = await this.commentService.createComment(comment);
 
     // update userPost total comment counts
-    const filter: FilterQuery<Comment> = {
-      targetPostId: new ObjectId(postDocId),
-    };
-
-    const select = { _id: 1 };
-
-    const newTotalComments = await this.commentService.getComments({
-      filter,
-      select,
-    });
-
-    const postDocFilter = { _id: postDocId };
-    const postDocUpdate = { totalCommentCount: newTotalComments.length };
-
-    await this.userPostServce.updatePost({
-      filter: postDocFilter,
-      update: postDocUpdate,
-    });
+    await this.updateTargetPost(postDocId, commentDocId);
 
     // update linked comments in target comment
-    const commentDocFilter = { _id: commentDocId };
-    const targetComment = await this.commentService.getCommentById(
-      commentDocId,
-    );
-    const originalLinkedComments = targetComment?.linkedComments || [];
-    const commentDocUpdate = {
-      linkedComments: [
-        ...originalLinkedComments,
-        new ObjectId(createdComment._id),
-      ],
-    };
-    await this.commentService.updateComment({
-      filter: commentDocFilter,
-      update: commentDocUpdate,
-    });
+    await this.updateTargetComment(commentDocId, createdComment);
 
     const res: NestResponseBaseOption = {
       success: true,
@@ -153,5 +121,49 @@ export class CommentsController {
       data: posts,
     };
     return res;
+  }
+
+  private async updateTargetPost(postDocId: string, commentDocId: string) {
+    const filter: FilterQuery<Comment> = {
+      targetPostId: new ObjectId(postDocId),
+    };
+    const select = { _id: 1 };
+
+    const newTotalComments = await this.commentService.getComments({
+      filter,
+      select,
+    });
+
+    const postDocFilter = { _id: postDocId };
+    const update: UpdateQuery<UserPost> = {
+      totalCommentCount: newTotalComments.length,
+      $addToSet: { comments: new ObjectId(commentDocId) },
+    };
+
+    return await this.userPostServce.updatePost({
+      filter: postDocFilter,
+      update,
+    });
+  }
+
+  private async updateTargetComment(
+    commentDocId: string,
+    createdComment: Comment & { _id: TObjectId },
+  ) {
+    const commentDocFilter = { _id: commentDocId };
+    const targetComment = await this.commentService.getCommentById(
+      commentDocId,
+    );
+    const originalLinkedComments = targetComment?.linkedComments || [];
+    const commentDocUpdate = {
+      linkedComments: [
+        ...originalLinkedComments,
+        new ObjectId(createdComment._id),
+      ],
+    };
+    return await this.commentService.updateComment({
+      filter: commentDocFilter,
+      update: commentDocUpdate,
+    });
   }
 }
