@@ -60,32 +60,22 @@ export class PostsController {
   async createPost(
     @Body() newPost: UserPostInterFace,
   ): Promise<NestResponseBaseOption> {
-    try {
-      newPost.totalCommentCount = 0;
+    const { postContent } = newPost;
 
-      const createdPost = await this.userPostService.createPost(newPost);
-
-      const res: NestResponseBaseOption = {
-        success: true,
-        data: createdPost,
-      };
-
-      return res;
-    } catch (error) {
-      // TODO: better handling?
-      console.error(error);
-      const isValidationError =
-        error instanceof Error && error.name.includes('ValidationError');
-
-      if (isValidationError) {
-        throw new BadRequestException(`${error.name}\n${error.message}`);
-      }
-
-      throw new HttpException(
-        'Internal Server Error',
-        HttpStatus.INTERNAL_SERVER_ERROR,
-      );
+    if (!postContent) {
+      throw new BadRequestException('postContent is not provided');
     }
+
+    newPost.totalCommentCount = 0;
+
+    const createdPost = await this.userPostService.createPost(newPost);
+
+    const res: NestResponseBaseOption = {
+      success: true,
+      data: createdPost,
+    };
+
+    return res;
   }
 
   @Get('/:postDocId')
