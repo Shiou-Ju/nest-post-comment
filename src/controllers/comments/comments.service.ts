@@ -20,6 +20,22 @@ export class CommentService {
     return createdComment.save();
   }
 
+  async updatePost(props: {
+    filter?: FilterQuery<Comment>;
+    update?: UpdateQuery<Comment>;
+  }) {
+    const model = this.commentModel;
+    const { filter, update } = props;
+
+    const updatedComment = await model
+      .findOneAndUpdate(filter, update, {
+        new: true,
+      })
+      .lean();
+
+    return updatedComment;
+  }
+
   async getCommentById(_id: string): Promise<CommentDocument> {
     return this.commentModel.findOne({ _id });
   }

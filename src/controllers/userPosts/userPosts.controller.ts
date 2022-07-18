@@ -139,14 +139,14 @@ export class PostsController {
     const update: UpdateQuery<UserPostInterFace> = updatePost;
 
     // TODO: still updates updatedAt, make sure if this satisfies needs
-    const createdPost = await this.userPostService.updatePost({
+    const updatedPost = await this.userPostService.updatePost({
       filter,
       update,
     });
 
     const res = {
       success: true,
-      data: createdPost,
+      data: updatedPost,
     };
 
     return res;

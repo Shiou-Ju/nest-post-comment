@@ -6,6 +6,7 @@ import {
   NotFoundException,
   Param,
   Post,
+  Put,
 } from '@nestjs/common';
 import { FilterQuery, UpdateQuery } from 'mongoose';
 import {
@@ -130,6 +131,42 @@ export class CommentsController {
       success: true,
       data: posts,
     };
+    return res;
+  }
+
+  // TODO: only supports modifying comment content
+  @Put('/:commentDocId')
+  async updateComment(
+    @Body()
+    updateComment: CommentInterface,
+    @Param() params: ParameterizedRoutParams,
+  ) {
+    const { commentDocId } = params;
+
+    if (!commentDocId) {
+      throw new BadRequestException('Comment document id is not provided');
+    }
+
+    const existingDoc = await this.commentService.getCommentById(commentDocId);
+
+    if (!existingDoc) {
+      throw new NotFoundException(`${commentDocId} comment not found`);
+    }
+
+    const filter: FilterQuery<CommentInterface> = { _id: commentDocId };
+    const update: UpdateQuery<CommentInterface> = updateComment;
+
+    // TODO: still updates updatedAt, make sure if this satisfies needs
+    const updatedComment = await this.commentService.updatePost({
+      filter,
+      update,
+    });
+
+    const res = {
+      success: true,
+      data: updatedComment,
+    };
+
     return res;
   }
 
