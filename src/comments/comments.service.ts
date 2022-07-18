@@ -24,20 +24,24 @@ export class CommentService {
     return this.commentModel.findOne({ _id });
   }
 
-  async getComments(props?: {
-    filter?: FilterQuery<Comment>;
-    sort?: { [key in keyof Partial<Comment>]: SortValues };
-    limit?: number;
-    // TODO: Add proper type
-    select?: { [key in keyof Partial<Comment> & TObjectId]: SortValues };
-  }): Promise<CommentDocument[]> {
+  async getComments(
+    props: {
+      filter?: FilterQuery<Comment>;
+      sort?: { [key in keyof Partial<Comment>]: SortValues };
+      limit?: number;
+      // TODO: Add proper type
+      select?: { [key in keyof Partial<Comment> & TObjectId]: SortValues };
+    } = {},
+  ): Promise<CommentDocument[]> {
+    const { filter, sort, limit, select } = props;
+
     return (
       this.commentModel
-        .find(props?.filter || {})
-        .sort(props?.sort || {})
+        .find(filter || {})
+        .sort(sort || {})
         // TODO: maybe add pagination here
-        .limit(props?.limit || Infinity)
-        .select(props?.select || {})
+        .limit(limit || 0)
+        .select(select || {})
         .lean()
     );
   }
@@ -47,8 +51,10 @@ export class CommentService {
     update?: UpdateQuery<CommentInterface>;
   }): Promise<CommentDocument> {
     const model = this.commentModel;
+    const { filter, update } = props;
+
     return await model
-      .findOneAndUpdate(props.filter, props.update, {
+      .findOneAndUpdate(filter, update, {
         new: true,
         upsert: true,
       })

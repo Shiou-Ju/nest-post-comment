@@ -25,17 +25,21 @@ export class UserPostService {
     return this.userPostModel.deleteOne({ _id: props._id });
   }
 
-  async getPosts(props?: {
-    filter?: FilterQuery<UserPost>;
-    sort?: { [key in keyof Partial<UserPost>]: SortValues };
-    limit?: number;
-  }): Promise<UserPostDocument[]> {
+  async getPosts(
+    props: {
+      filter?: FilterQuery<UserPost>;
+      sort?: { [key in keyof Partial<UserPost>]: SortValues };
+      limit?: number;
+    } = {},
+  ): Promise<UserPostDocument[]> {
+    const { filter, sort, limit } = props;
+
     return (
       this.userPostModel
-        .find(props?.filter || {})
-        .sort(props?.sort || {})
+        .find(filter || {})
+        .sort(sort || {})
         // TODO: maybe add pagination here
-        .limit(props?.limit || 50)
+        .limit(limit || 50)
         .lean()
     );
   }
@@ -45,10 +49,11 @@ export class UserPostService {
     update?: UpdateQuery<UserPostInterFace>;
   }): Promise<UserPostDocument> {
     const model = this.userPostModel;
+    const { filter, update } = props;
+
     return await model
-      .findOneAndUpdate(props.filter, props.update, {
+      .findOneAndUpdate(filter, update, {
         new: true,
-        upsert: true,
       })
       .lean();
   }
