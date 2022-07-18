@@ -6,14 +6,14 @@ import { MongooseModule } from '@nestjs/mongoose';
 import configuration from './config/configuration';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { PostsController } from './userPosts/userPosts.controller';
-import { UserPostService } from './userPosts/userPosts.service';
-import { CommentService } from './comments/comments.service';
+import { PostsController } from './controllers/userPosts/userPosts.controller';
+import { UserPostService } from './controllers/userPosts/userPosts.service';
+import { CommentService } from './controllers/comments/comments.service';
 import {
   UserPost,
   PostSchema as UserPostSchema,
 } from './schemas/userPost.schema';
-import { CommentsController } from './comments/comments.controller';
+import { CommentsController } from './controllers/comments/comments.controller';
 import { Comment, CommentSchema } from './schemas/comment.schema';
 
 @Module({

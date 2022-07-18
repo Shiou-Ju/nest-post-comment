@@ -15,7 +15,7 @@ import {
 import { CommentInterface } from 'src/interfaces/comment';
 import { Comment, CommentDocument } from 'src/schemas/comment.schema';
 import { ObjectId, TObjectId, UserPost } from 'src/schemas/userPost.schema';
-import { UserPostService } from 'src/userPosts/userPosts.service';
+import { UserPostService } from 'src/controllers/userPosts/userPosts.service';
 import { CommentService } from './comments.service';
 
 type CreateCommentRequestBody = {
