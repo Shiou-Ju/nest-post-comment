@@ -37,8 +37,8 @@ export class CommentService {
     return updatedComment;
   }
 
-  async getCommentById(_id: string): Promise<CommentDocument> {
-    return this.commentModel.findOne({ _id });
+  async getCommentById(_id: string): Promise<Comment> {
+    return this.commentModel.findOne({ _id }).lean();
   }
 
   async getComments(

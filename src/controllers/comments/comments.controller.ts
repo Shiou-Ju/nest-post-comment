@@ -69,6 +69,14 @@ export class CommentsController {
           `targetComment not found with id: ${targetCommentDocId} `,
         );
       }
+
+      const hasTargetCommentInPost =
+        targetComment.targetPostId.toString() === postDocId;
+      if (!hasTargetCommentInPost) {
+        throw new NotFoundException(
+          `targetComment not found in post: ${postDocId} `,
+        );
+      }
     }
 
     const comment: CommentInterface = {
@@ -201,32 +209,43 @@ export class CommentsController {
 
     const doc = await this.commentService.getCommentById(commentDocId);
 
-    const result = await this.commentService.deleteComment({
-      _id: new ObjectId(commentDocId),
-    });
-
-    if (result.deletedCount === 0) {
+    if (!doc) {
       response.status(HttpStatus.NO_CONTENT).send();
     } else {
-      await this.updateTargetPost(
-        postDocId,
-        doc.targetCommentId ? undefined : commentDocId,
-        'delete',
-      );
-
-      if (doc.targetCommentId) {
-        await this.updateTargetComment(
-          doc.targetCommentId.toString(),
-          commentDocId,
-          'delete',
+      const hasTargetCommentInPost = doc.targetPostId.toString() === postDocId;
+      if (!hasTargetCommentInPost) {
+        throw new NotFoundException(
+          `${commentDocId} is not in post ${postDocId}`,
         );
       }
 
-      const res: NestResponseBaseOption = {
-        success: true,
-        data: result,
-      };
-      response.status(HttpStatus.OK).send(res);
+      const result = await this.commentService.deleteComment({
+        _id: new ObjectId(commentDocId),
+      });
+
+      if (result.deletedCount === 0) {
+        response.status(HttpStatus.NO_CONTENT).send();
+      } else {
+        await this.updateTargetPost(
+          postDocId,
+          doc.targetCommentId ? undefined : commentDocId,
+          'delete',
+        );
+
+        if (doc.targetCommentId) {
+          await this.updateTargetComment(
+            doc.targetCommentId.toString(),
+            commentDocId,
+            'delete',
+          );
+        }
+
+        const res: NestResponseBaseOption = {
+          success: true,
+          data: result,
+        };
+        response.status(HttpStatus.OK).send(res);
+      }
     }
   }
 

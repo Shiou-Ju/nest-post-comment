@@ -17,8 +17,8 @@ export class UserPostService {
     return createdUserPost.save();
   }
 
-  async getPostById(_id: string): Promise<UserPostDocument> {
-    return this.userPostModel.findOne({ _id });
+  async getPostById(_id: string): Promise<UserPost> {
+    return this.userPostModel.findOne({ _id }).lean();
   }
 
   async deletePost(props?: { _id: string }): Promise<DeleteResult> {
